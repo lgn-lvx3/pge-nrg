@@ -1,12 +1,13 @@
 // biome-ignore lint/style/useImportType: <explanation>
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { CosmosDao } from "../src/CosmosDao";
-import { Utils } from "../src/Util";
+import type { EnergyEntry } from "../src/Types";
 
 const httpTrigger: AzureFunction = async (
 	context: Context,
 	req: HttpRequest,
 ): Promise<void> => {
+	context.log(`HTTP trigger for energy history - ${req.method}`);
 	// const user = Utils.checkAuthorization(req);
 
 	// if (!user) {
@@ -21,18 +22,36 @@ const httpTrigger: AzureFunction = async (
 		id: "123",
 	};
 
-	const dao = new CosmosDao();
+	if (req.params.id) {
+		// get a single entry by id
+		const dao = new CosmosDao();
+		const entry: EnergyEntry = await dao.getItem(req.params.id);
+		context.res = {
+			body: { data: entry },
+		};
+	} else if (req.query.startDate && req.query.endDate) {
+		// get all entries between startDate and endDate
+		const dao = new CosmosDao();
 
-	const entry = await dao.find({
-		query: "SELECT * FROM c WHERE c.type = 'energyEntry'",
-	});
+		// order by entryDate DESC to get the most recent entries first
+		const entries: EnergyEntry[] = await dao.find({
+			query: `SELECT * FROM c WHERE c.type = 'energyEntry' AND c.userId = '${user.id}' AND c.entryDate >= '${req.query.startDate}' AND c.entryDate <= '${req.query.endDate}' ORDER BY c.entryDate DESC`,
+		});
+		context.res = {
+			body: { data: entries },
+		};
+	} else {
+		// get all entries
+		const dao = new CosmosDao();
 
-	context.log("HTTP trigger function processed a request.");
-
-	context.res = {
-		// status: 200, /* Defaults to 200 */
-		body: { data: entry },
-	};
+		// order by to get the most recent entries first
+		const entries: EnergyEntry[] = await dao.find({
+			query: `SELECT * FROM c WHERE c.type = 'energyEntry' AND c.userId = '${user.id}' ORDER BY c.entryDate DESC`,
+		});
+		context.res = {
+			body: { data: entries },
+		};
+	}
 };
 
 export default httpTrigger;

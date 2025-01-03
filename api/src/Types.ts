@@ -34,8 +34,9 @@ export type User = {
 export type EnergyEntry = {
 	id: string;
 	userId: string;
-	date: Date;
+	entryDate: Date;
 	usage: number;
 	createdAt: Date;
+	createdType: "manual" | "upload";
 	type: "energyEntry";
 };

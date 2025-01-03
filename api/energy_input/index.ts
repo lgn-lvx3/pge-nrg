@@ -5,7 +5,7 @@ import { Utils } from "../src/Util";
 import { CosmosDao } from "../src/CosmosDao";
 
 const index: AzureFunction = async (context: Context, req: HttpRequest) => {
-	context.log("Energy Input HTTP trigger function processed a request.");
+	context.log(`HTTP trigger for energy input - ${req.method}`);
 
 	// // get the user auth info from the request
 	// const user = Utils.checkAuthorization(req);
@@ -54,12 +54,14 @@ const index: AzureFunction = async (context: Context, req: HttpRequest) => {
 
 	// create EnergyEntry object with user id, date, usage
 	const energyEntry: EnergyEntry = {
-		id: Utils.basicId(),
+		// set date to yyyy-mm-dd
+		id: `${user.id}-${new Date(body.date).toISOString().split("T")[0]}`,
 		userId: user.id,
-		date: new Date(body.date),
+		entryDate: new Date(body.date),
 		createdAt: new Date(),
 		usage: body.usage,
 		type: "energyEntry",
+		createdType: "manual",
 	};
 
 	// add the object to the database

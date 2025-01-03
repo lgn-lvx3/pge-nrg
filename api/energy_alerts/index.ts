@@ -8,7 +8,7 @@ const httpTrigger: AzureFunction = async (
 	context: Context,
 	req: HttpRequest,
 ): Promise<void> => {
-	context.log("HTTP trigger function processed a request.");
+	context.log(`HTTP trigger for energy alerts - ${req.method}`);
 
 	// const user = Utils.checkAuthorization(req);
 
@@ -24,50 +24,83 @@ const httpTrigger: AzureFunction = async (
 		id: "123",
 	};
 
-	const method = req.method;
-	if (method === REQUEST_METHOD.GET) {
-		const dao = new CosmosDao();
-		const alerts = await dao.find({
-			query: `SELECT * FROM c WHERE c.userId = '${user.id}' AND c.type = 'alert'`,
-		});
+	switch (req.method) {
+		case REQUEST_METHOD.GET: {
+			if (!req.params.id) {
+				// get all alerts for a user
+				const dao = new CosmosDao();
+				const alerts = await dao.find({
+					query: `SELECT * FROM c WHERE c.userId = '${user.id}' AND c.type = 'alert'`,
+				});
 
-		context.res = {
-			body: { data: alerts },
-		};
-	} else if (method === REQUEST_METHOD.POST) {
-		const body = req.body;
-		if (!body.threshold) {
-			context.res = {
-				status: 400,
-				body: { message: "Threshold is required." },
-			};
-			return;
+				context.res = {
+					body: { data: alerts },
+				};
+			} else {
+				// get a single alert by id
+				const dao = new CosmosDao();
+				const alert: Alert = await dao.getItem(req.params.id);
+
+				context.res = {
+					body: { data: alert },
+				};
+			}
+
+			break;
 		}
+		case REQUEST_METHOD.POST: {
+			const body = req.body;
+			if (!body.threshold || typeof body.threshold !== "number") {
+				context.res = {
+					status: 400,
+					body: { message: "Threshold is required." },
+				};
+				return;
+			}
 
-		const alert: Alert = {
-			id: `${user.id}-alert`, // adding string here to make sure it's unique / singular
-			userId: user.id,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-			threshold: body.threshold,
-			channels: body.channels || [ALERT_CHANNEL.EMAIL], // default to email
-			type: "alert",
-		};
+			const alert: Alert = {
+				id: Utils.basicId(),
+				userId: user.id,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				threshold: body.threshold,
+				channels: body.channels || [ALERT_CHANNEL.EMAIL], // default to email
+				type: "alert",
+			};
 
-		const dao = new CosmosDao();
+			const dao = new CosmosDao();
 
-		// addItem here is an upsert
-		const result = await dao.addItem(alert);
+			// addItem here is an upsert
+			const result = await dao.addItem(alert);
 
-		context.res = {
-			// status: 200, /* Defaults to 200 */
-			body: { data: result },
-		};
-	} else {
-		context.res = {
-			status: 405,
-			body: { message: "Method not allowed." },
-		};
+			context.res = {
+				body: { data: result },
+			};
+			break;
+		}
+		case REQUEST_METHOD.DELETE: {
+			if (!req.params.id) {
+				context.res = {
+					status: 400,
+					body: { message: "Alert ID is required." },
+				};
+				return;
+			}
+			const dao = new CosmosDao();
+			const alertId = req.params.id;
+			await dao.deleteItem(alertId);
+
+			context.res = {
+				body: { data: "Successfully deleted alert." },
+			};
+			break;
+		}
+		default: {
+			context.res = {
+				status: 405,
+				body: { message: "Method not allowed." },
+			};
+		}
 	}
 };
 
