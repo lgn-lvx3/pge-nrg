@@ -7,9 +7,10 @@
 - `swa deploy --env production`
 
 ## handy links
-https://learn.microsoft.com/en-us/azure/static-web-apps/deploy-web-framework?tabs=bash&pivots=react
-https://vite.dev/guide/
-https://azure.github.io/static-web-apps-cli/docs/cli/swa-start/
+- https://learn.microsoft.com/en-us/azure/static-web-apps/deploy-web-framework?tabs=bash&pivots=react
+- https://vite.dev/guide/
+- https://azure.github.io/static-web-apps-cli/docs/cli/swa-start/
+- https://learn.microsoft.com/en-us/azure/static-web-apps/add-authentication
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

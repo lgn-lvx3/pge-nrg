@@ -4,8 +4,7 @@
 	},
 	"routes": [
 		{
-			"route": "/*",
-			"allowedRoles": ["authenticated"]
+			"route": "/*"
 		}
 	],
 	"responseOverrides": {

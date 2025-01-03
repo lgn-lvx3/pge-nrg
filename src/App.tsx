@@ -5,15 +5,16 @@ import "./App.css";
 
 function App() {
 	const [count, setCount] = useState(0);
-	const [data, setData] = useState("");
+	// const [data, setData] = useState("");
 
 	useEffect(() => {
 		// biome-ignore lint/complexity/useArrowFunction: <explanation>
 		(async function () {
-			const { text } = await (await fetch("/api/message")).json();
-			setData(text);
+			const { data } = await (await fetch("/api/energy/history")).json();
+			// setData(data);
+			console.log(data);
 		})();
-	});
+	}, []);
 
 	return (
 		<>
@@ -38,7 +39,7 @@ function App() {
 			<p className="read-the-docs">
 				Click on the Vite and React logos to learn more
 			</p>
-			<div>API response: {data}</div>
+			{/* <div>API response: {data}</div> */}
 		</>
 	);
 }
