@@ -1,10 +1,10 @@
 # React + TypeScript + Vite
 
 ## handy commands
-`yarn create vite pge-nrg --template react-ts`
-`swa build`
-`swa login --resource-group pge-rg --app-name pge-nrg`
-`swa deploy --env production`
+- `yarn create vite pge-nrg --template react-ts`
+- `swa build`
+- `swa login --resource-group pge-rg --app-name pge-nrg`
+- `swa deploy --env production`
 
 ## handy links
 https://learn.microsoft.com/en-us/azure/static-web-apps/deploy-web-framework?tabs=bash&pivots=react
