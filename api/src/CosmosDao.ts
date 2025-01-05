@@ -104,8 +104,16 @@ export class CosmosDao {
 		}
 	}
 
+	/**
+	 * Bulk inserts items into the database
+	 * @param {T[]} items - The items to insert
+	 * @returns {Promise<void>}
+	 * @author Logan Hendershot
+	 * @date 01/06/2025
+	 */
 	async bulkInsert<T extends { id: string }>(items: T[]): Promise<void> {
 		const operations: UpsertOperationInput[] = [];
+		// loop through each passed item, build an operation for each
 		for (const item of items) {
 			operations.push({
 				operationType: BulkOperationType.Upsert,
@@ -118,7 +126,7 @@ export class CosmosDao {
 		// cosmos has a limit of 100 operations per batch
 		// loop through the operations in batches of 100 by setting i to 0 and incrementing by 100
 		for (let i = 0; i < operations.length; i += 100) {
-			// get the next 100 operations by slicing the array from i to i + 100
+			// get the next 100 operations by slicing the array from i to i + 100 aka a batch
 			const batch = operations.slice(i, i + 100);
 			console.log("Bulk inserting batch", i, "of", operations.length);
 			// send the batch to cosmos

@@ -29,13 +29,10 @@ Date,Usage(kWh)
 2025-01-01,22
 2026-01-01,22
 
-I have the data in the public folder, so can test given example with this URL
+I have the data in the public folder, so you can test given example with this URL -
 
-`http://localhost:4280/api/energy/upload?url=http://localhost:5173/example_2500.csv`
+Postman - `http://<app-url>/api/energy/upload?url=http://<app-url>/example_2500.csv`
 
-`http://localhost:5173/example_2500.csv`
-or
-`http://<app_url>/example_2500.csv`
 
 ## SNS
 Write a scheduled Azure Function (e.g., using a Timer trigger) to:

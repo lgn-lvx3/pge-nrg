@@ -3,7 +3,7 @@ import type { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import * as stream from "node:stream";
 import { promisify } from "node:util";
 import { parse } from "csv-parse";
-import type { EnergyEntry } from "../src/Types";
+import type { APIResponse, EnergyEntry } from "../src/Types";
 import { CosmosDao } from "../src/CosmosDao";
 
 const pipeline = promisify(stream.pipeline);
@@ -14,12 +14,15 @@ const httpTrigger: AzureFunction = async (
 ): Promise<void> => {
 	const preSignedUrl = req.query.url; // Pre-signed S3 URL as a query parameter
 
-	context.log("preSignedUrl", preSignedUrl);
+	context.log("Uploading CSV from", preSignedUrl);
 
 	if (!preSignedUrl) {
 		context.res = {
 			status: 400,
-			body: "Please provide a valid S3 pre-signed URL in the 'url' query parameter.",
+			body: {
+				message:
+					"Please provide a valid S3 pre-signed URL in the 'url' query parameter.",
+			} as APIResponse,
 		};
 		return;
 	}
@@ -133,6 +136,8 @@ const httpTrigger: AzureFunction = async (
 						energyEntries.length,
 						"items to database",
 					);
+					// bulk inserting lets you insert 100 files at a time
+					// saving 100x the number of calls to the database
 					try {
 						await dao.bulkInsert(energyEntries);
 					} catch (err) {
@@ -150,15 +155,53 @@ const httpTrigger: AzureFunction = async (
 			status: 200,
 			body: {
 				message: `CSV file downloaded from ${preSignedUrl} and processed successfully.`,
-			},
+			} as APIResponse,
 		};
 	} catch (error) {
 		context.res = {
 			status: 500,
-			body: `Error processing the CSV file: ${error.message}`,
+			body: {
+				message: `Error processing the CSV file: ${error.message}`,
+			} as APIResponse,
 		};
 		context.log.error(error);
 	}
 };
+
+/**
+ * @swagger
+ * /energy-upload:
+ *   post:
+ *     summary: Upload and process energy data from a CSV file
+ *     description: This endpoint allows you to upload a CSV file containing energy data via a pre-signed S3 URL. The data is processed and stored in the database.
+ *     tags:
+ *       - Energy Upload
+ *     parameters:
+ *       - in: query
+ *         name: url
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The pre-signed S3 URL of the CSV file to upload.
+ *     responses:
+ *       200:
+ *         description: CSV file downloaded and processed successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/APIResponse'
+ *       400:
+ *         description: Bad request. A valid S3 pre-signed URL is required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/APIResponse'
+ *       500:
+ *         description: Internal server error. Error processing the CSV file.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/APIResponse'
+ */
 
 export default httpTrigger;
