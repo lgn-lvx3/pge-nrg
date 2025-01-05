@@ -22,6 +22,7 @@ const httpTrigger: AzureFunction = async (
 
 	const user = {
 		id: "123",
+		email: "logan@lvx3.com",
 	};
 
 	switch (req.method) {
@@ -61,6 +62,8 @@ const httpTrigger: AzureFunction = async (
 			const alert: Alert = {
 				id: Utils.basicId(),
 				userId: user.id,
+				// we add email for timer email alert function
+				userEmail: user.email,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 				threshold: body.threshold,
@@ -74,7 +77,10 @@ const httpTrigger: AzureFunction = async (
 			const result = await dao.addItem(alert);
 
 			context.res = {
-				body: { data: result },
+				body: {
+					data: result,
+					message: "Alert added to database.",
+				},
 			};
 			break;
 		}
@@ -98,7 +104,7 @@ const httpTrigger: AzureFunction = async (
 		default: {
 			context.res = {
 				status: 405,
-				body: { message: "Method not allowed." },
+				body: { data: "Method not allowed." },
 			};
 		}
 	}

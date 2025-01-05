@@ -4,7 +4,6 @@ import * as stream from "node:stream";
 import { promisify } from "node:util";
 import { parse } from "csv-parse";
 import type { EnergyEntry } from "../src/Types";
-import { Utils } from "../src/Util";
 import { CosmosDao } from "../src/CosmosDao";
 
 const pipeline = promisify(stream.pipeline);
@@ -43,7 +42,6 @@ const httpTrigger: AzureFunction = async (
 
 	try {
 		context.log("Downloading and processing the CSV file...");
-		const errors: string[] = [];
 		// date format: yyyy-mm-dd
 		const validDateRegex = /^\d{4}-\d{1,2}-\d{1,2}$/;
 
@@ -69,12 +67,13 @@ const httpTrigger: AzureFunction = async (
 							skip_empty_lines: true,
 						},
 						(err, records) => {
-							context.log("err", err);
-							context.log("records", records);
 							if (err) {
+								context.log("err", err);
 								callback(new Error(`Parsing error: ${err.message}`));
 								return;
 							}
+
+							context.log("Parsing ", records.length, " records");
 
 							// for each row, validate the date and usage
 							for (const row of records) {
@@ -112,9 +111,10 @@ const httpTrigger: AzureFunction = async (
 			new stream.Writable({
 				objectMode: true,
 				async write(rows, encoding, callback) {
-					context.log("Processing rows:", rows); // Log or process each row
+					context.log("Processing # of rows:", rows.length); // Log or process each row
 
 					// now we write to the database
+					const energyEntries: EnergyEntry[] = [];
 					for (const row of rows) {
 						const energyEntry: EnergyEntry = {
 							id: `${user.id}-${row.date}`,
@@ -125,13 +125,20 @@ const httpTrigger: AzureFunction = async (
 							createdType: "upload",
 							type: "energyEntry",
 						};
-
-						context.log("energyEntry", energyEntry);
-
-						await dao.addItem(energyEntry);
-						context.log(`Energy id: ${energyEntry.id} added to database`);
+						energyEntries.push(energyEntry);
 					}
 
+					context.log(
+						"Bulk writing",
+						energyEntries.length,
+						"items to database",
+					);
+					try {
+						await dao.bulkInsert(energyEntries);
+					} catch (err) {
+						callback(new Error(`Error bulk inserting: ${err}`));
+						context.log("Error bulk inserting", err);
+					}
 					callback(); // Signal that the row is processed
 				},
 			}),
@@ -141,7 +148,9 @@ const httpTrigger: AzureFunction = async (
 
 		context.res = {
 			status: 200,
-			body: `CSV file downloaded from ${preSignedUrl} and processed successfully.`,
+			body: {
+				message: `CSV file downloaded from ${preSignedUrl} and processed successfully.`,
+			},
 		};
 	} catch (error) {
 		context.res = {

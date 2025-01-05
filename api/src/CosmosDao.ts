@@ -1,5 +1,10 @@
 // biome-ignore lint/style/useImportType: <explanation>
-import { CosmosClient, SqlQuerySpec } from "@azure/cosmos";
+import {
+	BulkOperationType,
+	CosmosClient,
+	SqlQuerySpec,
+	UpsertOperationInput,
+} from "@azure/cosmos";
 
 /**
  * @description Sets up each cosmos client with the correct endpoint and key, depending on if testing mode
@@ -81,6 +86,7 @@ export class CosmosDao {
 				.read();
 			return retrieved;
 		} catch (err) {
+			console.log(err);
 			return undefined;
 		}
 	}
@@ -94,7 +100,32 @@ export class CosmosDao {
 				.delete();
 			return deleted;
 		} catch (err) {
-			// console.log(err)
+			console.log(err);
+		}
+	}
+
+	async bulkInsert<T extends { id: string }>(items: T[]): Promise<void> {
+		const operations: UpsertOperationInput[] = [];
+		for (const item of items) {
+			operations.push({
+				operationType: BulkOperationType.Upsert,
+				resourceBody: item,
+			});
+		}
+
+		console.log("Bulk inserting", items.length, "items");
+
+		// cosmos has a limit of 100 operations per batch
+		// loop through the operations in batches of 100 by setting i to 0 and incrementing by 100
+		for (let i = 0; i < operations.length; i += 100) {
+			// get the next 100 operations by slicing the array from i to i + 100
+			const batch = operations.slice(i, i + 100);
+			console.log("Bulk inserting batch", i, "of", operations.length);
+			// send the batch to cosmos
+			await this.client
+				.database(this.databaseId)
+				.container(this.containerId)
+				.items.bulk(batch);
 		}
 	}
 }

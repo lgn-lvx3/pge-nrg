@@ -71,7 +71,10 @@ const index: AzureFunction = async (context: Context, req: HttpRequest) => {
 	// return the object
 	context.res = {
 		// status: 200, /* Defaults to 200 */
-		body: { data: result },
+		body: {
+			message: "Energy entry added to database",
+			data: result,
+		},
 	};
 };
 

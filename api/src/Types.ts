@@ -13,6 +13,7 @@ export enum REQUEST_METHOD {
 export type Alert = {
 	id: string;
 	userId: string;
+	userEmail?: string;
 	createdAt: Date;
 	updatedAt: Date;
 	threshold: number;
