@@ -1,6 +1,6 @@
 import type { AzureFunction, Context } from "@azure/functions";
-import { CosmosDao } from "../src/CosmosDao";
-import type { Alert, EnergyEntry } from "../src/Types";
+import { CosmosDao } from "./CosmosDao";
+import type { Alert, EnergyEntry } from "./Types";
 import axios from "axios";
 
 const sendGridApiKey = process.env.sendgrid_api_key;
