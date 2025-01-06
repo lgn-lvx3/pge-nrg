@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Navbar } from "react-daisyui";
+import { Button, Dropdown, Menu, Navbar, useTheme } from "react-daisyui";
 import { Outlet } from "react-router";
 
 export function RootLayout() {
@@ -15,6 +15,8 @@ export function RootLayout() {
 	// 		</Footer>
 	// 	</div>
 	// );
+
+	useTheme("light");
 
 	return (
 		<>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { EnergyEntry } from "../../api/src/Types";
-import { Button, Modal, Table } from "react-daisyui";
+import { Button, Card, Modal, Table } from "react-daisyui";
 
 const calculateAverageUsageForMonth = (
 	averageMonthlyUsage: { month: string; averageUsage: number }[],
@@ -115,9 +115,8 @@ export function Dashboard() {
 
 	return (
 		<div className="container mx-auto">
-			<h1 className="text-4xl font-bold mb-3">Energy Usage Entries</h1>
-			<Button onClick={handleShow}>Add Entry</Button>
-			<Modal ref={ref}>
+			{/* Modal for adding a new entry */}
+			<Modal ref={ref} backdrop>
 				<Modal.Header className="font-bold">Hello!</Modal.Header>
 				<Modal.Body>
 					Press ESC key or click the button below to close
@@ -128,53 +127,82 @@ export function Dashboard() {
 					</form>
 				</Modal.Actions>
 			</Modal>
-			<h3 className="text-2xl font-bold mb-10">
-				Total Usage:{" "}
-				{Number(
-					energyEntries.reduce((acc, entry) => acc + entry.usage, 0),
-				).toFixed(2)}
-				{" kWh"}
-			</h3>
-			<h3 className="text-2xl font-bold mb-10">
-				Average Usage:{" "}
-				{Number(
-					energyEntries.reduce((acc, entry) => acc + entry.usage, 0) /
-						energyEntries.length,
-				).toFixed(2)}
-				{" kWh"}
-			</h3>
-			<h3 className="text-2xl font-bold mb-10">Average monthly usage: </h3>
-			<div className="flex flex-col gap-2">
-				{averageMonthlyUsageByMonth.map((entry) => {
-					return (
-						<div key={entry.month}>
-							<span>
-								{entry.month} - {Number(entry.averageUsage).toFixed(2)} kWh
-							</span>
-						</div>
-					);
-				})}
-			</div>
-			<div className="h-[1024px] overflow-y-auto">
-				<Table pinRows>
-					<Table.Head>
-						<span>Date</span>
-						<span>Usage</span>
-						<span>Created</span>
-						<span>Input Type</span>
-					</Table.Head>
 
-					<Table.Body>
-						{energyEntries.map((entry) => (
-							<Table.Row key={entry.id}>
-								<span>{new Date(entry.entryDate).toLocaleDateString()}</span>
-								<span>{entry.usage} kWh</span>
-								<span>{new Date(entry.createdAt).toLocaleDateString()}</span>
-								<span>{entry.createdType}</span>
-							</Table.Row>
-						))}
-					</Table.Body>
-				</Table>
+			{/* Main content */}
+			<div className="flex-1 flex-row justify-between items-center">
+				<div className="grid grid-cols-8">
+					<div className="col-span-6">
+						<Card className="p-3">
+							<Card.Title>
+								<h1 className="text-4xl font-bold mb-3">
+									Energy Usage Entries
+								</h1>
+							</Card.Title>
+							<Card.Actions>
+								<Button onClick={handleShow}>Add Entry</Button>
+							</Card.Actions>
+							<Card.Body>
+								<div className="h-[700px] overflow-y-auto">
+									<Table pinRows>
+										<Table.Head>
+											<span>Date</span>
+											<span>Usage</span>
+											<span>Created</span>
+											<span>Input Type</span>
+										</Table.Head>
+
+										<Table.Body>
+											{energyEntries.map((entry) => (
+												<Table.Row key={entry.id}>
+													<span>
+														{new Date(entry.entryDate).toLocaleDateString()}
+													</span>
+													<span>{entry.usage} kWh</span>
+													<span>
+														{new Date(entry.createdAt).toLocaleDateString()}
+													</span>
+													<span>{entry.createdType}</span>
+												</Table.Row>
+											))}
+										</Table.Body>
+									</Table>
+								</div>
+							</Card.Body>
+						</Card>
+					</div>
+					<div className="flex flex-col">
+						<h3 className="text-2xl font-bold mb-10">
+							Total Usage:{" "}
+							{Number(
+								energyEntries.reduce((acc, entry) => acc + entry.usage, 0),
+							).toFixed(2)}
+							{" kWh"}
+						</h3>
+						<h3 className="text-2xl font-bold mb-10">
+							Average Usage:{" "}
+							{Number(
+								energyEntries.reduce((acc, entry) => acc + entry.usage, 0) /
+									energyEntries.length,
+							).toFixed(2)}
+							{" kWh"}
+						</h3>
+						<h3 className="text-2xl font-bold mb-10">
+							Average monthly usage:{" "}
+						</h3>
+						<div className="flex flex-col gap-2">
+							{averageMonthlyUsageByMonth.map((entry) => {
+								return (
+									<div key={entry.month}>
+										<span>
+											{entry.month} - {Number(entry.averageUsage).toFixed(2)}{" "}
+											kWh
+										</span>
+									</div>
+								);
+							})}
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	);
