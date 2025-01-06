@@ -27,6 +27,17 @@ const httpTrigger: AzureFunction = async (
 		return;
 	}
 
+	// validate the url with regex
+	if (!preSignedUrl && !preSignedUrl.match(/^https?:\/\/[^\s/$.?#].[^\s]*$/)) {
+		context.res = {
+			status: 400,
+			body: {
+				message: "Please provide a valid S3 pre-signed URL.",
+			} as APIResponse,
+		};
+		return;
+	}
+
 	const dao = new CosmosDao();
 
 	// const user = Utils.checkAuthorization(req);

@@ -26,7 +26,7 @@ describe("Energy History Function", () => {
 	});
 
 	it("should return 400 if no body and no date", async () => {
-		req.body = {};
+		req.body = null;
 		await index(context, req, daoMock);
 
 		expect(context.res.body).toEqual({

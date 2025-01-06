@@ -32,7 +32,7 @@ const index: AzureFunction = async (
 	const dao = mockDao ?? new CosmosDao();
 
 	// verify required fields are present
-	if (!body.date || !body.usage) {
+	if (!body || !body.date || !body.usage) {
 		context.res = {
 			status: 400,
 			body: { message: "Date and usage are required." } as APIResponse,

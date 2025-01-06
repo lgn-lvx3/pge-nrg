@@ -56,10 +56,21 @@ const httpTrigger: AzureFunction = async (
 		}
 		case REQUEST_METHOD.POST: {
 			const body = req.body;
-			if (!body.threshold || typeof body.threshold !== "number") {
+			console.log(body);
+			if (!body || !body.threshold || typeof body.threshold !== "number") {
 				context.res = {
 					status: 400,
 					body: { message: "Threshold is required." } as APIResponse,
+				};
+				return;
+			}
+
+			// verify threshold is a number
+			const verifiedThreshold = Number(body.threshold);
+			if (Number.isNaN(verifiedThreshold)) {
+				context.res = {
+					status: 400,
+					body: { message: "Threshold must be a number." } as APIResponse,
 				};
 				return;
 			}

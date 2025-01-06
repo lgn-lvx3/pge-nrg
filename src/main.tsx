@@ -1,12 +1,13 @@
-// import React from "react";
+import "./index.css";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { Docs } from "./screens/Docs";
 import { Login } from "./screens/Login";
 import { Dashboard } from "./screens/Dashboard";
 import { RootLayout } from "./Layout";
-import "./index.css";
+
 import { AuthProvider } from "./AuthContext";
+import { Alerts } from "./screens/Alerts";
 
 const root = document.getElementById("root");
 
@@ -20,6 +21,7 @@ ReactDOM.createRoot(root as HTMLElement).render(
 					<Route path="/" element={<Login />} />
 					<Route path="/dashboard" element={<Dashboard />} />
 					<Route path="/docs" element={<Docs />} />
+					<Route path="/alerts" element={<Alerts />} />
 				</Route>
 			</Routes>
 		</AuthProvider>

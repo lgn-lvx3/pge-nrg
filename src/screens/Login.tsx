@@ -16,25 +16,6 @@ export function Login() {
 		}
 	}, [isAuthenticated, navigate]);
 
-	// const { isAuthenticated } = useAuth();
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-	// useEffect(() => {
-	// 	const getUserInfoAsync = async () => {
-	// 		const response = await fetch("/.auth/me");
-	// 		const payload = await response.json();
-	// 		const { clientPrincipal } = payload;
-	// 		setUserInfo(clientPrincipal);
-	// 	};
-	// 	getUserInfoAsync();
-
-	// 	if (userInfo) {
-	// 		navigate("/dashboard");
-	// 	} else {
-	// 		navigate("/");
-	// 	}
-	// }, [userInfo]);
-
 	return (
 		<>
 			<div className="container flex flex-1 justify-center items-center">

@@ -1,146 +1,198 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { EnergyEntry } from "../../api/src/Types";
-import { Button, Card, Modal, Table } from "react-daisyui";
+import { Button, Card, Input, Modal, Table } from "react-daisyui";
+import { Utils } from "@/Utils";
 
-const calculateAverageUsageForMonth = (
-	averageMonthlyUsage: { month: string; averageUsage: number }[],
-	monthName: string,
-) => {
-	const monthlyAverage = averageMonthlyUsage.filter((entry) =>
-		entry.month.includes(monthName),
-	);
-	const total = monthlyAverage.reduce(
-		(acc, entry) => acc + entry.averageUsage,
-		0,
-	);
-	return total / monthlyAverage.length;
-};
-
-const calculateAverageMonthlyUsage = (entries: EnergyEntry[]) => {
-	const usageByMonth: { [key: string]: number[] } = {};
-
-	// biome-ignore lint/complexity/noForEach: <explanation>
-	entries.forEach((entry) => {
-		const month = new Date(entry.entryDate).toLocaleString("default", {
-			month: "long",
-			year: "numeric",
-		});
-		if (!usageByMonth[month]) {
-			usageByMonth[month] = [];
-		}
-		usageByMonth[month].push(entry.usage);
-	});
-
-	const averageUsageByMonth = Object.entries(usageByMonth).map(
-		([month, usages]) => {
-			const totalUsage = usages.reduce((acc, usage) => acc + usage, 0);
-			return {
-				month,
-				averageUsage: Number((totalUsage / usages.length).toFixed(2)),
-			};
-		},
-	);
-
-	return averageUsageByMonth;
-};
-
-const calculateAverageMonthlyUsageByMonth = (entries: EnergyEntry[]) => {
-	const months = [
-		"January",
-		"February",
-		"March",
-		"April",
-		"May",
-		"June",
-		"July",
-		"August",
-		"September",
-		"October",
-		"November",
-		"December",
-	];
-
-	const averageMonthlyUsage = calculateAverageMonthlyUsage(entries);
-	const averageUsageByMonth = months.map((month) => {
-		return {
-			month,
-			averageUsage: calculateAverageUsageForMonth(averageMonthlyUsage, month),
-		};
-	});
-
-	return averageUsageByMonth;
+type InputEntry = {
+	date: string;
+	usage: number;
 };
 
 export function Dashboard() {
 	const [energyEntries, setEnergyEntries] = useState<EnergyEntry[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState<string | null>(null);
 
-	// const { userInfo } = useAuth();
+	const [entry, setEntry] = useState<InputEntry | null>(null);
+	const [uploadUrl, setUploadUrl] = useState<string | null>(null);
 
+	const fetchEnergyData = async () => {
+		try {
+			const response = await fetch("/api/energy/history");
+			const { data } = await response.json();
+			setEnergyEntries(data);
+		} catch (err) {
+			setError("Failed to fetch energy data");
+			console.error(err);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
-		const fetchEnergyData = async () => {
-			try {
-				const response = await fetch("/api/energy/history");
-				const { data } = await response.json();
-				setEnergyEntries(data);
-			} catch (err) {
-				setError("Failed to fetch energy data");
-				console.error(err);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
 		fetchEnergyData();
 	}, []);
 
-	const entryModal = useRef<HTMLDialogElement>(null);
-	const uploadModal = useRef<HTMLDialogElement>(null);
+	const handleEntrySubmit = async () => {
+		console.log(entry);
+		setError(null);
+		setSuccess(null);
+		const response = await fetch("/api/energy/input", {
+			method: "POST",
+			body: JSON.stringify(entry),
+		});
+
+		if (response.ok) {
+			await fetchEnergyData();
+			setEntry(null);
+			const { message } = await response.json();
+			setSuccess(message);
+		} else {
+			const { message } = await response.json();
+			setError(message);
+		}
+	};
+
+	const handleUploadSubmit = async () => {
+		console.log(uploadUrl);
+		setError(null);
+		setSuccess(null);
+		const response = await fetch(`/api/energy/upload?url=${uploadUrl}`, {
+			method: "POST",
+		});
+
+		if (response.ok) {
+			await fetchEnergyData();
+			setUploadUrl(null);
+			const { message } = await response.json();
+			setSuccess(message);
+		} else {
+			const { message } = await response.json();
+			setError(message);
+		}
+	};
+
+	// eslint-disable-next-line react-hooks/rules-of-hooks
+
+	const entryRef = useRef<HTMLDialogElement>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-	const handleEntryModal = useCallback(() => {
-		entryModal.current?.show();
-	}, [entryModal]);
+	const handleEntryShow = useCallback(() => {
+		setEntry(null);
+		setError(null);
+		setSuccess(null);
+		entryRef.current?.showModal();
+	}, [entryRef]);
 
+	const uploadRef = useRef<HTMLDialogElement>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-	const handleUploadModal = useCallback(() => {
-		uploadModal.current?.show();
-	}, [uploadModal]);
-
-	if (isLoading) {
-		return <div>Loading...</div>;
-	}
-
-	if (error) {
-		return <div>Error: {error}</div>;
-	}
+	const handleUploadShow = useCallback(() => {
+		setUploadUrl(null);
+		setError(null);
+		setSuccess(null);
+		uploadRef.current?.showModal();
+	}, [uploadRef]);
 
 	const averageMonthlyUsageByMonth =
-		calculateAverageMonthlyUsageByMonth(energyEntries);
-	console.log(averageMonthlyUsageByMonth);
+		Utils.calculateAverageMonthlyUsageByMonth(energyEntries);
 
 	return (
 		<div className="container mx-auto">
 			{/* Modal for adding a new entry */}
-			<Modal ref={entryModal}>
-				<Modal.Header className="font-bold">Hello!</Modal.Header>
+			<Modal ref={entryRef} ariaHidden={false} backdrop={true}>
+				<Modal.Header className="font-bold">Add Energy Entry</Modal.Header>
 				<Modal.Body>
-					Press ESC key or click the button below to close
+					<div className="flex flex-row gap-2">
+						<div className="form-control w-full max-w-xs">
+							<label className="label">
+								<span className="label-text">Date</span>
+							</label>
+							<Input
+								type="text"
+								value={entry?.date || ""}
+								onChange={(e) =>
+									setEntry({
+										date: e.target.value,
+										usage: entry?.usage || 0,
+									})
+								}
+							/>
+							<label className="label">
+								<span className="label-text-alt">YYYY-MM-DD</span>
+							</label>
+						</div>
+						<div className="form-control w-full max-w-xs">
+							<label className="label">
+								<span className="label-text">Amount</span>
+							</label>
+							<Input
+								type="number"
+								value={entry?.usage || ""}
+								onChange={(e) =>
+									setEntry({
+										date: entry?.date || "",
+										usage: Number(e.target.value),
+									})
+								}
+							/>
+							<label className="label">
+								<span className="label-text-alt">kWh</span>
+							</label>
+						</div>
+					</div>
+					{error && <div className="text-red-500">{error}</div>}
+					{success && <div className="text-green-500">{success}</div>}
 				</Modal.Body>
 				<Modal.Actions>
 					<form method="dialog">
-						<Button>Close</Button>
+						<Button
+							loading={isLoading}
+							onClick={(event) => {
+								event.preventDefault();
+								setIsLoading(true);
+								handleEntrySubmit();
+								setIsLoading(false);
+							}}
+						>
+							Submit
+						</Button>
 					</form>
 				</Modal.Actions>
 			</Modal>
-			<Modal ref={uploadModal} backdrop>
-				<Modal.Header className="font-bold">Hello!</Modal.Header>
+			<Modal ref={uploadRef} ariaHidden={false} backdrop={true}>
+				<Modal.Header className="font-bold">Upload CSV by URL</Modal.Header>
 				<Modal.Body>
-					Press ESC key or click the button below to close
+					<div className="form-control w-full max-w-xs">
+						<label className="label">
+							<span className="label-text">URL</span>
+						</label>
+						<Input
+							type="text"
+							value={uploadUrl || ""}
+							onChange={(e) => setUploadUrl(e.target.value)}
+						/>
+						<label className="label">
+							<span className="label-text-alt">
+								https://example.com/energy.csv
+							</span>
+						</label>
+					</div>
+					{error && <div className="text-red-500">{error}</div>}
+					{success && <div className="text-green-500">{success}</div>}
 				</Modal.Body>
 				<Modal.Actions>
 					<form method="dialog">
-						<Button>Close</Button>
+						<Button
+							onClick={(event) => {
+								event.preventDefault();
+								setIsLoading(true);
+								handleUploadSubmit();
+								setIsLoading(false);
+							}}
+						>
+							Submit
+						</Button>
 					</form>
 				</Modal.Actions>
 			</Modal>
@@ -157,35 +209,43 @@ export function Dashboard() {
 									</h1>
 								</Card.Title>
 								<Card.Actions>
-									<Button onClick={handleEntryModal}>Add Entry</Button>
-									<Button className="btn-link" onClick={handleUploadModal}>
+									<Button onClick={handleEntryShow}>Add Entry</Button>
+									<Button className="btn-link" onClick={handleUploadShow}>
 										Upload CSV
 									</Button>
 								</Card.Actions>
 								<div className="h-[700px] overflow-y-auto">
-									<Table pinRows>
-										<Table.Head>
-											<span>Date</span>
-											<span>Usage</span>
-											<span>Created</span>
-											<span>Input Type</span>
-										</Table.Head>
+									{energyEntries.length === 0 && (
+										<div className="text-center">
+											No entries found. Create one!
+										</div>
+									)}
+									{energyEntries.length > 0 && (
+										<Table pinRows zebra>
+											<Table.Head>
+												<span>Date</span>
+												<span>Usage</span>
+												<span>Created</span>
+												<span>Input Type</span>
+											</Table.Head>
 
-										<Table.Body>
-											{energyEntries.map((entry) => (
-												<Table.Row key={entry.id}>
-													<span>
-														{new Date(entry.entryDate).toLocaleDateString()}
-													</span>
-													<span>{entry.usage} kWh</span>
-													<span>
-														{new Date(entry.createdAt).toLocaleDateString()}
-													</span>
-													<span>{entry.createdType}</span>
-												</Table.Row>
-											))}
-										</Table.Body>
-									</Table>
+											<Table.Body>
+												{energyEntries.length > 0 &&
+													energyEntries.map((entry) => (
+														<Table.Row key={entry.id}>
+															<span>
+																{new Date(entry.entryDate).toLocaleDateString()}
+															</span>
+															<span>{entry.usage} kWh</span>
+															<span>
+																{new Date(entry.createdAt).toLocaleDateString()}
+															</span>
+															<span>{entry.createdType}</span>
+														</Table.Row>
+													))}
+											</Table.Body>
+										</Table>
+									)}
 								</div>
 							</Card.Body>
 						</Card>
@@ -193,19 +253,22 @@ export function Dashboard() {
 					<div className="grid col-span-2">
 						<Card className="shadow-xl">
 							<Card.Body>
-								<h3 className="text-2xl font-bold">
+								{/* <Card.Title>
+									<span className="text-2xl font-bold">Energy Data</span>
+								</Card.Title> */}
+								<h3 className="text-xl font-bold">
 									Total:{" "}
 									{Number(
 										energyEntries.reduce((acc, entry) => acc + entry.usage, 0),
 									).toFixed(2)}
 									{" kWh"}
 								</h3>
-								<h3 className="text-2xl font-bold">
+								<h3 className="text-xl font-bold">
 									Average:{" "}
 									{Number(
 										energyEntries.reduce((acc, entry) => acc + entry.usage, 0) /
 											energyEntries.length,
-									).toFixed(2)}
+									).toFixed(2) || 0}
 									{" kWh"}
 								</h3>
 								<div className="">
