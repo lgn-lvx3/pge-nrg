@@ -95,11 +95,17 @@ export function Dashboard() {
 		fetchEnergyData();
 	}, []);
 
-	const ref = useRef<HTMLDialogElement>(null);
+	const entryModal = useRef<HTMLDialogElement>(null);
+	const uploadModal = useRef<HTMLDialogElement>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-	const handleShow = useCallback(() => {
-		ref.current?.show();
-	}, [ref]);
+	const handleEntryModal = useCallback(() => {
+		entryModal.current?.show();
+	}, [entryModal]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	const handleUploadModal = useCallback(() => {
+		uploadModal.current?.show();
+	}, [uploadModal]);
 
 	if (isLoading) {
 		return <div>Loading...</div>;
@@ -116,7 +122,18 @@ export function Dashboard() {
 	return (
 		<div className="container mx-auto">
 			{/* Modal for adding a new entry */}
-			<Modal ref={ref} backdrop>
+			<Modal ref={entryModal}>
+				<Modal.Header className="font-bold">Hello!</Modal.Header>
+				<Modal.Body>
+					Press ESC key or click the button below to close
+				</Modal.Body>
+				<Modal.Actions>
+					<form method="dialog">
+						<Button>Close</Button>
+					</form>
+				</Modal.Actions>
+			</Modal>
+			<Modal ref={uploadModal} backdrop>
 				<Modal.Header className="font-bold">Hello!</Modal.Header>
 				<Modal.Body>
 					Press ESC key or click the button below to close
@@ -130,18 +147,21 @@ export function Dashboard() {
 
 			{/* Main content */}
 			<div className="flex-1 flex-row justify-between items-center">
-				<div className="grid grid-cols-8">
+				<div className="grid grid-cols-8 gap-3">
 					<div className="col-span-6">
-						<Card className="p-3">
-							<Card.Title>
-								<h1 className="text-4xl font-bold mb-3">
-									Energy Usage Entries
-								</h1>
-							</Card.Title>
-							<Card.Actions>
-								<Button onClick={handleShow}>Add Entry</Button>
-							</Card.Actions>
+						<Card className="p-3 shadow-xl">
 							<Card.Body>
+								<Card.Title>
+									<h1 className="text-4xl font-bold mb-3">
+										Energy Usage Entries
+									</h1>
+								</Card.Title>
+								<Card.Actions>
+									<Button onClick={handleEntryModal}>Add Entry</Button>
+									<Button className="btn-link" onClick={handleUploadModal}>
+										Upload CSV
+									</Button>
+								</Card.Actions>
 								<div className="h-[700px] overflow-y-auto">
 									<Table pinRows>
 										<Table.Head>
@@ -170,37 +190,47 @@ export function Dashboard() {
 							</Card.Body>
 						</Card>
 					</div>
-					<div className="flex flex-col">
-						<h3 className="text-2xl font-bold mb-10">
-							Total Usage:{" "}
-							{Number(
-								energyEntries.reduce((acc, entry) => acc + entry.usage, 0),
-							).toFixed(2)}
-							{" kWh"}
-						</h3>
-						<h3 className="text-2xl font-bold mb-10">
-							Average Usage:{" "}
-							{Number(
-								energyEntries.reduce((acc, entry) => acc + entry.usage, 0) /
-									energyEntries.length,
-							).toFixed(2)}
-							{" kWh"}
-						</h3>
-						<h3 className="text-2xl font-bold mb-10">
-							Average monthly usage:{" "}
-						</h3>
-						<div className="flex flex-col gap-2">
-							{averageMonthlyUsageByMonth.map((entry) => {
-								return (
-									<div key={entry.month}>
-										<span>
-											{entry.month} - {Number(entry.averageUsage).toFixed(2)}{" "}
-											kWh
-										</span>
-									</div>
-								);
-							})}
-						</div>
+					<div className="grid col-span-2">
+						<Card className="shadow-xl">
+							<Card.Body>
+								<h3 className="text-2xl font-bold">
+									Total:{" "}
+									{Number(
+										energyEntries.reduce((acc, entry) => acc + entry.usage, 0),
+									).toFixed(2)}
+									{" kWh"}
+								</h3>
+								<h3 className="text-2xl font-bold">
+									Average:{" "}
+									{Number(
+										energyEntries.reduce((acc, entry) => acc + entry.usage, 0) /
+											energyEntries.length,
+									).toFixed(2)}
+									{" kWh"}
+								</h3>
+								<div className="">
+									<Table pinRows>
+										<Table.Head>
+											<span>Month</span>
+											<span>Average Usage</span>
+										</Table.Head>
+
+										<Table.Body>
+											{averageMonthlyUsageByMonth.map((entry) => {
+												return (
+													<Table.Row key={entry.month}>
+														<span>{entry.month}</span>
+														<span>
+															{Number(entry.averageUsage).toFixed(2)} kWh
+														</span>
+													</Table.Row>
+												);
+											})}
+										</Table.Body>
+									</Table>
+								</div>
+							</Card.Body>
+						</Card>
 					</div>
 				</div>
 			</div>

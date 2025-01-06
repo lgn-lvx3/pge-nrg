@@ -20,7 +20,10 @@ export function RootLayout() {
 
 	return (
 		<>
-			<Navbar className="container mx-auto flex-1 justify-center bg-primary text-white">
+			<Navbar
+				className="container mx-auto justify-center shadow-xl rounded-box mt-5 p-3"
+				data-theme="light"
+			>
 				<Navbar.Start>
 					<Dropdown>
 						<Button
@@ -81,7 +84,9 @@ export function RootLayout() {
 					</Menu>
 				</Navbar.Center>
 				<Navbar.End>
-					<Button tag="a">Button</Button>
+					<Button tag="a" href="/.auth/logout">
+						Sign Out
+					</Button>
 				</Navbar.End>
 			</Navbar>
 			<div className="flex flex-1 flex-grow justify-center my-10">

@@ -6,6 +6,7 @@ import { Login } from "./screens/Login";
 import { Dashboard } from "./screens/Dashboard";
 import { RootLayout } from "./Layout";
 import "./index.css";
+import { AuthProvider } from "./AuthContext";
 
 const root = document.getElementById("root");
 
@@ -13,12 +14,14 @@ const root = document.getElementById("root");
 
 ReactDOM.createRoot(root as HTMLElement).render(
 	<BrowserRouter>
-		<Routes>
-			<Route element={<RootLayout />}>
-				<Route path="/" element={<Login />} />
-				<Route path="/dashboard" element={<Dashboard />} />
-				<Route path="/docs" element={<Docs />} />
-			</Route>
-		</Routes>
+		<AuthProvider>
+			<Routes>
+				<Route element={<RootLayout />}>
+					<Route path="/" element={<Login />} />
+					<Route path="/dashboard" element={<Dashboard />} />
+					<Route path="/docs" element={<Docs />} />
+				</Route>
+			</Routes>
+		</AuthProvider>
 	</BrowserRouter>,
 );
