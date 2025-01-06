@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { parse } from "csv-parse";
 import type { APIResponse, EnergyEntry } from "../src/Types";
 import { CosmosDao } from "../src/CosmosDao";
+import { Utils } from "../src/Util";
 
 const pipeline = promisify(stream.pipeline);
 
@@ -12,6 +13,16 @@ const httpTrigger: AzureFunction = async (
 	context: Context,
 	req: HttpRequest,
 ): Promise<void> => {
+	const user = Utils.checkAuthorization(req);
+
+	if (!user) {
+		context.res = {
+			status: 401,
+			body: { message: "Unauthorized" },
+		};
+		return;
+	}
+
 	const preSignedUrl = req.query.url; // Pre-signed S3 URL as a query parameter
 
 	context.log("Uploading CSV from", preSignedUrl);
@@ -39,20 +50,6 @@ const httpTrigger: AzureFunction = async (
 	}
 
 	const dao = new CosmosDao();
-
-	// const user = Utils.checkAuthorization(req);
-
-	// if (!user) {
-	// 	context.res = {
-	// 		status: 401,
-	// 		body: { message: "Unauthorized" },
-	// 	};
-	// 	return;
-	// }
-
-	const user = {
-		id: "123",
-	};
 
 	try {
 		context.log("Downloading and processing the CSV file...");

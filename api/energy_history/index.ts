@@ -2,6 +2,7 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { CosmosDao } from "../src/CosmosDao";
 import type { APIResponse, EnergyEntry } from "../src/Types";
+import { Utils } from "../src/Util";
 
 const httpTrigger: AzureFunction = async (
 	context: Context,
@@ -9,19 +10,16 @@ const httpTrigger: AzureFunction = async (
 	mockDao?: CosmosDao,
 ): Promise<void> => {
 	context.log(`HTTP trigger for energy history - ${req.method}`);
-	// const user = Utils.checkAuthorization(req);
 
-	// if (!user) {
-	// 	context.res = {
-	// 		status: 401,
-	// 		body: { message: "Unauthorized" },
-	// 	};
-	// 	return;
-	// }
+	const user = Utils.checkAuthorization(req);
 
-	const user = {
-		id: "123",
-	};
+	if (!user) {
+		context.res = {
+			status: 401,
+			body: { message: "Unauthorized" },
+		};
+		return;
+	}
 
 	const dao = mockDao ?? new CosmosDao();
 
@@ -45,6 +43,7 @@ const httpTrigger: AzureFunction = async (
 		const entries: EnergyEntry[] = await dao.find({
 			query: `SELECT * FROM c WHERE c.type = 'energyEntry' AND c.userId = '${user.id}' ORDER BY c.entryDate DESC`,
 		});
+		context.log(entries);
 		context.res = {
 			body: { data: entries } as APIResponse,
 		};

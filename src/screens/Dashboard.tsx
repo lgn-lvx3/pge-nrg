@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { EnergyEntry } from "../../api/src/Types";
 import { Button, Card, Input, Modal, Table } from "react-daisyui";
 import { Utils } from "@/Utils";
+import { useAuth } from "@/AuthContext";
+import { useNavigate } from "react-router";
 
 type InputEntry = {
 	date: string;
@@ -10,24 +12,33 @@ type InputEntry = {
 
 export function Dashboard() {
 	const [energyEntries, setEnergyEntries] = useState<EnergyEntry[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 
 	const [entry, setEntry] = useState<InputEntry | null>(null);
 	const [uploadUrl, setUploadUrl] = useState<string | null>(null);
 
+	const { isAuthenticated } = useAuth();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!isAuthenticated) {
+			navigate("/");
+		}
+	}, [isAuthenticated, navigate]);
+
 	const fetchEnergyData = async () => {
-		try {
-			const response = await fetch("/api/energy/history");
+		setIsLoading(true);
+		const response = await fetch("/api/energy/history");
+		console.log(response);
+		if (response.ok) {
 			const { data } = await response.json();
 			setEnergyEntries(data);
-		} catch (err) {
+		} else {
 			setError("Failed to fetch energy data");
-			console.error(err);
-		} finally {
-			setIsLoading(false);
 		}
+		setIsLoading(false);
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -213,6 +224,7 @@ export function Dashboard() {
 									<Button className="btn-link" onClick={handleUploadShow}>
 										Upload CSV
 									</Button>
+									{isLoading && <Button loading={true} />}
 								</Card.Actions>
 								<div className="h-[700px] overflow-y-auto">
 									{energyEntries.length === 0 && (
@@ -267,8 +279,8 @@ export function Dashboard() {
 									Average:{" "}
 									{Number(
 										energyEntries.reduce((acc, entry) => acc + entry.usage, 0) /
-											energyEntries.length,
-									).toFixed(2) || 0}
+											energyEntries.length || 0,
+									).toFixed(2)}
 									{" kWh"}
 								</h3>
 								<div className="">

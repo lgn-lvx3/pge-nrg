@@ -3,6 +3,7 @@ import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import type { APIResponse, EnergyEntry } from "../src/Types";
 // import { Utils } from "../src/Util";
 import { CosmosDao } from "../src/CosmosDao";
+import { Utils } from "../src/Util";
 
 const index: AzureFunction = async (
 	context: Context,
@@ -12,19 +13,15 @@ const index: AzureFunction = async (
 	context.log(`HTTP trigger for energy input - ${req.method}`);
 
 	// // get the user auth info from the request
-	// const user = Utils.checkAuthorization(req);
+	const user = Utils.checkAuthorization(req);
 
-	// if (!user) {
-	// 	context.res = {
-	// 		status: 401,
-	// 		body: { message: "Unauthorized" },
-	// 	};
-	// 	return;
-	// }
-
-	const user = {
-		id: "123",
-	};
+	if (!user) {
+		context.res = {
+			status: 401,
+			body: { message: "Unauthorized" },
+		};
+		return;
+	}
 
 	// get the body of the post call
 	const body = req.body;

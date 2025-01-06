@@ -15,20 +15,15 @@ const httpTrigger: AzureFunction = async (
 ): Promise<void> => {
 	context.log(`HTTP trigger for energy alerts - ${req.method}`);
 
-	// const user = Utils.checkAuthorization(req);
+	const user = Utils.checkAuthorization(req);
 
-	// if (!user) {
-	// 	context.res = {
-	// 		status: 401,
-	// 		body: { message: "Unauthorized" },
-	// 	};
-	// 	return;
-	// }
-
-	const user = {
-		id: "123",
-		email: "logan@lvx3.com",
-	};
+	if (!user) {
+		context.res = {
+			status: 401,
+			body: { message: "Unauthorized" },
+		};
+		return;
+	}
 
 	switch (req.method) {
 		case REQUEST_METHOD.GET: {

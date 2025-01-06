@@ -26,6 +26,8 @@ export abstract class Utils {
 
 		// get user info
 		const user = JSON.parse(decoded);
+		user.id = user.userId;
+		console.log("user", user);
 
 		return user;
 	}

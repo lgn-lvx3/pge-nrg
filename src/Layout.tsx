@@ -27,8 +27,9 @@ export function RootLayout() {
 				data-theme="light"
 			>
 				<Navbar.Start>
-					{/* biome-ignore lint/a11y/useValidAnchor: <explanation> */}
-					<a className="btn btn-ghost normal-case text-xl">PGE NRG</a>
+					<Link to="/" className="btn btn-ghost normal-case text-xl">
+						PGE NRG
+					</Link>
 				</Navbar.Start>
 				{isAuthenticated && (
 					<Navbar.Center className="hidden lg:flex">
