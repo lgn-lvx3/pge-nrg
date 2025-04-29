@@ -19,6 +19,14 @@ type InputEntry = {
 	usage: number;
 };
 
+// Define a type for the user information
+interface UserPrincipal {
+	userId: string;
+	userDetails: string;
+	identityProvider: string;
+	userRoles: string[];
+}
+
 export function Dashboard() {
 	const [energyEntries, setEnergyEntries] = useState<EnergyEntry[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +37,7 @@ export function Dashboard() {
 
 	const [entry, setEntry] = useState<InputEntry | null>(null);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [userInfo, setUserInfo] = useState<UserPrincipal | null>(null);
 
 	const { isAuthenticated } = useAuth();
 	const navigate = useNavigate();
@@ -36,6 +45,29 @@ export function Dashboard() {
 	useEffect(() => {
 		if (!isAuthenticated) {
 			navigate("/");
+		} else {
+			// Get user information when authenticated
+			const getUserInfo = async () => {
+				try {
+					const response = await fetch("/.auth/me");
+					const payload = await response.json();
+
+					// Extract user information from the response
+					if (payload.clientPrincipal) {
+						const { userId, userDetails, identityProvider, userRoles } =
+							payload.clientPrincipal;
+						setUserInfo({
+							userId: userId || "unknown",
+							userDetails: userDetails || "unknown",
+							identityProvider: identityProvider || "unknown",
+							userRoles: userRoles || [],
+						});
+					}
+				} catch (error) {
+					console.error("Failed to get user info:", error);
+				}
+			};
+			getUserInfo();
 		}
 	}, [isAuthenticated, navigate]);
 
@@ -70,12 +102,24 @@ export function Dashboard() {
 
 			const blockBlobClient = containerClient.getBlockBlobClient(file.name);
 
+			// Add metadata to the blob upload
+			const metadata = {
+				userId: userInfo?.userId || "unknown",
+				userEmail: userInfo?.userDetails || "unknown",
+				identityProvider: userInfo?.identityProvider || "unknown",
+				uploadDate: new Date().toISOString(),
+				originalFilename: file.name,
+				fileSize: file.size.toString(),
+				contentType: file.type,
+			};
+
 			const upload = await blockBlobClient.uploadData(file, {
 				onProgress: (ev) => {
 					const percent = Math.round((ev.loadedBytes / file.size) * 100);
 					console.log(`Upload progress: ${percent}%`);
 					setUploadProgress(percent);
 				},
+				metadata: metadata,
 			});
 
 			console.log("Upload complete", upload);
