@@ -1,5 +1,5 @@
 // src/Utils.ts
-import type { EnergyEntry } from "../api/src/Types";
+import type { EnergyEntry } from "./Types";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
 export abstract class Utils {

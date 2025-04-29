@@ -1,6 +1,6 @@
 ## Deliverables
 
-Deployed app url: https://lively-mud-02baee110.4.azurestaticapps.net/
+Deployed app url: https://gray-sand-04ca9ed1e.6.azurestaticapps.net/
 
 My app heavily uses Azure Functions and Azure static web apps. To run locally, you may need to install both.
 
@@ -34,9 +34,9 @@ Date,Usage(kWh)
 2025-01-01,22
 2026-01-01,22
 
-I have the data in the public folder, so you can test a small given example with this URL - `https://lively-mud-02baee110.4.azurestaticapps.net/test-data.csv`
+I have the data in the public folder, so you can test a small given example with this URL - `https://gray-sand-04ca9ed1e.6.azurestaticapps.net/test-data.csv`
 
-or this URL for 2500 line CSV file - `https://lively-mud-02baee110.4.azurestaticapps.net/example_2500.csv`
+or this URL for 2500 line CSV file - `https://gray-sand-04ca9ed1e.6.azurestaticapps.net/example_2500.csv`
 
 Postman - `http://<app-url>/api/energy/upload?url=http://<app-url>/example_2500.csv`
 

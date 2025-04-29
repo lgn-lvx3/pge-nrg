@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"swa": "swa start http://localhost:5173 --api-location ./api",
+		"swa": "swa start http://localhost:5173",
 		"build": "tsc -b && vite build",
 		"lint": "eslint .",
 		"preview": "vite preview",

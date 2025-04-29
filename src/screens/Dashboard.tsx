@@ -1,9 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { EnergyEntry } from "../../api/src/Types";
-import { Button, Card, Input, Modal, Table } from "react-daisyui";
+import type { EnergyEntry } from "../Types";
+import {
+	Button,
+	Card,
+	FileInput,
+	Input,
+	Modal,
+	Table,
+	Progress,
+} from "react-daisyui";
 import { Utils } from "@/Utils";
 import { useAuth } from "@/AuthContext";
 import { useNavigate } from "react-router";
+import { BlobServiceClient } from "@azure/storage-blob";
 
 type InputEntry = {
 	date: string;
@@ -15,9 +24,11 @@ export function Dashboard() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
+	const [uploadProgress, setUploadProgress] = useState<number>(0);
+	const [isUploading, setIsUploading] = useState<boolean>(false);
 
 	const [entry, setEntry] = useState<InputEntry | null>(null);
-	const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
 	const { isAuthenticated } = useAuth();
 	const navigate = useNavigate();
@@ -27,6 +38,81 @@ export function Dashboard() {
 			navigate("/");
 		}
 	}, [isAuthenticated, navigate]);
+
+	async function uploadFileWithProgress(file: File) {
+		setIsUploading(true);
+		setUploadProgress(0);
+
+		try {
+			const response = await fetch("/api/security/generate-sas", {
+				method: "POST",
+				body: JSON.stringify({ filename: file.name }),
+			});
+
+			console.log("sas response", response);
+
+			if (!response.ok) {
+				setError("Failed to upload. Please try again.");
+				setIsUploading(false);
+				return;
+			}
+
+			// sass token
+			const { data } = await response.json();
+
+			console.log("sas data", data);
+
+			const containerName = import.meta.env.BLOB_CONTAINER_NAME || "";
+			const blobServiceClient = new BlobServiceClient(data);
+
+			const containerClient =
+				blobServiceClient.getContainerClient(containerName);
+
+			const blockBlobClient = containerClient.getBlockBlobClient(file.name);
+
+			const upload = await blockBlobClient.uploadData(file, {
+				onProgress: (ev) => {
+					const percent = Math.round((ev.loadedBytes / file.size) * 100);
+					console.log(`Upload progress: ${percent}%`);
+					setUploadProgress(percent);
+				},
+			});
+
+			console.log("Upload complete", upload);
+			setSuccess("File uploaded successfully");
+
+			// After successful upload, process the file
+			// await processUploadedFile(file.name);
+		} catch (err) {
+			console.error("Upload error:", err);
+			setError("Failed to upload file");
+		} finally {
+			setIsUploading(false);
+		}
+	}
+
+	// async function processUploadedFile(fileName: string) {
+	// 	try {
+	// 		const response = await fetch(
+	// 			`/api/energy/process-upload?filename=${fileName}`,
+	// 			{
+	// 				method: "POST",
+	// 			},
+	// 		);
+
+	// 		if (response.ok) {
+	// 			await fetchEnergyData();
+	// 			const { message } = await response.json();
+	// 			setSuccess(message);
+	// 		} else {
+	// 			const { message } = await response.json();
+	// 			setError(message);
+	// 		}
+	// 	} catch (err) {
+	// 		console.error("Processing error:", err);
+	// 		setError("Failed to process uploaded file");
+	// 	}
+	// }
 
 	const fetchEnergyData = async () => {
 		setIsLoading(true);
@@ -66,23 +152,62 @@ export function Dashboard() {
 		}
 	};
 
-	const handleUploadSubmit = async () => {
-		console.log(uploadUrl);
+	// const handleCsvUrlSubmit = async () => {
+	// 	console.log(uploadUrl);
+	// 	setError(null);
+	// 	setSuccess(null);
+	// 	const response = await fetch(`/api/energy/upload?url=${uploadUrl}`, {
+	// 		method: "POST",
+	// 	});
+
+	// 	if (response.ok) {
+	// 		await fetchEnergyData();
+	// 		setUploadUrl(null);
+	// 		const { message } = await response.json();
+	// 		setSuccess(message);
+	// 	} else {
+	// 		const { message } = await response.json();
+	// 		setError(message);
+	// 	}
+	// };
+
+	const handleCsvFileSubmit = async () => {
+		console.log(selectedFile);
 		setError(null);
 		setSuccess(null);
-		const response = await fetch(`/api/energy/upload?url=${uploadUrl}`, {
-			method: "POST",
-		});
-
-		if (response.ok) {
-			await fetchEnergyData();
-			setUploadUrl(null);
-			const { message } = await response.json();
-			setSuccess(message);
-		} else {
-			const { message } = await response.json();
-			setError(message);
+		if (!selectedFile) {
+			setError("Please select a file");
+			return;
 		}
+
+		await uploadFileWithProgress(selectedFile);
+
+		setSelectedFile(null);
+	};
+
+	const handleFileUpload = async (
+		event: React.ChangeEvent<HTMLInputElement>,
+	) => {
+		const files = event.target.files;
+		if (files && files.length > 0) {
+			const file = files[0];
+			if (file.type !== "text/csv") {
+				setError("Please upload a CSV file");
+				return;
+			}
+			setSelectedFile(file);
+		}
+	};
+
+	const handleFileSubmit = async () => {
+		if (!selectedFile) {
+			setError("Please select a file");
+			return;
+		}
+		setError(null);
+		setSuccess(null);
+		await uploadFileWithProgress(selectedFile);
+		setSelectedFile(null);
 	};
 
 	// eslint-disable-next-line react-hooks/rules-of-hooks
@@ -99,9 +224,11 @@ export function Dashboard() {
 	const uploadRef = useRef<HTMLDialogElement>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	const handleUploadShow = useCallback(() => {
-		setUploadUrl(null);
+		// setUploadUrl(null);
+		setSelectedFile(null);
 		setError(null);
 		setSuccess(null);
+		setUploadProgress(0);
 		uploadRef.current?.showModal();
 	}, [uploadRef]);
 
@@ -116,10 +243,11 @@ export function Dashboard() {
 				<Modal.Body>
 					<div className="flex flex-row gap-2">
 						<div className="form-control w-full max-w-xs">
-							<label className="label">
+							<label className="label" htmlFor="date-input">
 								<span className="label-text">Date</span>
 							</label>
 							<Input
+								id="date-input"
 								type="text"
 								value={entry?.date || ""}
 								onChange={(e) =>
@@ -129,15 +257,16 @@ export function Dashboard() {
 									})
 								}
 							/>
-							<label className="label">
+							<label className="label" htmlFor="date-input">
 								<span className="label-text-alt">YYYY-MM-DD</span>
 							</label>
 						</div>
 						<div className="form-control w-full max-w-xs">
-							<label className="label">
+							<label className="label" htmlFor="amount-input">
 								<span className="label-text">Amount</span>
 							</label>
 							<Input
+								id="amount-input"
 								type="number"
 								value={entry?.usage || ""}
 								onChange={(e) =>
@@ -147,7 +276,7 @@ export function Dashboard() {
 									})
 								}
 							/>
-							<label className="label">
+							<label className="label" htmlFor="amount-input">
 								<span className="label-text-alt">kWh</span>
 							</label>
 						</div>
@@ -172,38 +301,94 @@ export function Dashboard() {
 				</Modal.Actions>
 			</Modal>
 			<Modal ref={uploadRef} ariaHidden={false} backdrop={true}>
-				<Modal.Header className="font-bold">Upload CSV by URL</Modal.Header>
+				<Modal.Header className="font-bold">Upload Energy Data</Modal.Header>
 				<Modal.Body>
+					{/* <div className="tabs tabs-boxed mb-4">
+						<button
+							className={`tab ${!selectedFile ? "tab-active" : ""}`}
+							onClick={() => setSelectedFile(null)}
+							type="button"
+						>
+							URL Upload
+						</button>
+						<button
+							className={`tab ${selectedFile ? "tab-active" : ""}`}
+							onClick={() => setUploadUrl(null)}
+							type="button"
+						>
+							File Upload
+						</button>
+					</div> */}
+
+					{/* {selectedFile ? (
+						<div className="form-control w-full max-w-xs">
+							<label className="label" htmlFor="url-input">
+								<span className="label-text">URL</span>
+							</label>
+							<Input
+								id="url-input"
+								type="text"
+								value={uploadUrl || ""}
+								onChange={(e) => setUploadUrl(e.target.value)}
+							/>
+							<label className="label" htmlFor="url-input">
+								<span className="label-text-alt">
+									https://example.com/energy.csv
+								</span>
+							</label>
+						</div>
+					) : ( */}
 					<div className="form-control w-full max-w-xs">
-						<label className="label">
-							<span className="label-text">URL</span>
+						<label className="label" htmlFor="file-input">
+							<span className="label-text">CSV File</span>
 						</label>
-						<Input
-							type="text"
-							value={uploadUrl || ""}
-							onChange={(e) => setUploadUrl(e.target.value)}
+						<FileInput
+							id="file-input"
+							type="file"
+							accept=".csv"
+							onChange={handleFileUpload}
 						/>
-						<label className="label">
-							<span className="label-text-alt">
-								https://example.com/energy.csv
-							</span>
+						<label className="label" htmlFor="file-input">
+							<span className="label-text-alt">Select a CSV file</span>
 						</label>
 					</div>
-					{error && <div className="text-red-500">{error}</div>}
-					{success && <div className="text-green-500">{success}</div>}
+					{/* )} */}
+
+					{isUploading && (
+						<div className="mt-4">
+							<Progress value={uploadProgress} max="100" className="w-full" />
+							<p className="text-center mt-2">Uploading: {uploadProgress}%</p>
+						</div>
+					)}
+
+					{error && <div className="text-red-500 mt-4">{error}</div>}
+					{success && <div className="text-green-500 mt-4">{success}</div>}
 				</Modal.Body>
 				<Modal.Actions>
 					<form method="dialog">
-						<Button
-							onClick={(event) => {
-								event.preventDefault();
-								setIsLoading(true);
-								handleUploadSubmit();
-								setIsLoading(false);
-							}}
-						>
-							Submit
-						</Button>
+						{!selectedFile ? (
+							<Button
+								onClick={(event) => {
+									event.preventDefault();
+									setIsLoading(true);
+									// handleCsvUrlSubmit();
+									handleCsvFileSubmit();
+									setIsLoading(false);
+								}}
+							>
+								Upload CSV
+							</Button>
+						) : (
+							<Button
+								onClick={(event) => {
+									event.preventDefault();
+									handleFileSubmit();
+								}}
+								disabled={!selectedFile || isUploading}
+							>
+								{isUploading ? "Uploading..." : "Upload File"}
+							</Button>
+						)}
 					</form>
 				</Modal.Actions>
 			</Modal>

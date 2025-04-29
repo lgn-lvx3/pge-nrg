@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { Alert } from "../../api/src/Types";
+import type { Alert } from "../Types";
 import { Button, Card, Input, Modal, Table } from "react-daisyui";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/AuthContext";
