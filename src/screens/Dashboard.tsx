@@ -78,7 +78,9 @@ export function Dashboard() {
 		try {
 			const response = await fetch("/api/security/generate-sas", {
 				method: "POST",
-				body: JSON.stringify({ filename: file.name }),
+				body: JSON.stringify({
+					filename: `${userInfo?.userId}-${file.name}`,
+				}),
 			});
 
 			console.log("sas response", response);
@@ -100,7 +102,9 @@ export function Dashboard() {
 			const containerClient =
 				blobServiceClient.getContainerClient(containerName);
 
-			const blockBlobClient = containerClient.getBlockBlobClient(file.name);
+			const blockBlobClient = containerClient.getBlockBlobClient(
+				`${userInfo?.userId}-${file.name}`,
+			);
 
 			// Add metadata to the blob upload
 			const metadata = {
