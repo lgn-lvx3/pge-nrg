@@ -93,6 +93,7 @@ export function Alerts() {
 				<Modal.Body>
 					<div className="flex flex-row gap-2">
 						<div className="form-control w-full max-w-xs">
+							{/* biome-ignore lint/a11y/noLabelWithoutControl: <explanation> */}
 							<label className="label">
 								<span className="label-text">Threshold</span>
 							</label>
@@ -105,6 +106,7 @@ export function Alerts() {
 									})
 								}
 							/>
+							{/* biome-ignore lint/a11y/noLabelWithoutControl: <explanation> */}
 							<label className="label">
 								<span className="label-text-alt">kWh</span>
 							</label>

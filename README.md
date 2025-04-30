@@ -11,6 +11,10 @@ My app heavily uses Azure Functions and Azure static web apps. To run locally, y
 Run `npx swa build` then `npx swa start`
 If this doesn't work you may need to install static web apps as a dev or regular dependency. You will also need to install azure functions core tools, using the links above - the getting started sections.
 
+## Example Data
+You can download an example CSV file to test the upload functionality:
+- [Download example_2500.csv](https://raw.githubusercontent.com/lgn-lvx3/pge-nrg/main/public/example_2500.csv)
+
 ## Project Core Deliverables
 
 ✅ **User Authentication**
@@ -159,6 +163,28 @@ graph TD
     style L fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c
     style M fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c
 ```
+
+
+### CI/CD Implementation
+
+✅ **GitHub Actions Workflow**
+- Automated build and deployment pipeline
+- Triggers on push to main branch and pull requests
+- Uses Node.js 20 for build environment
+- Secure token handling for Azure deployment
+- Automated static web app deployment
+
+✅ **Deployment Configuration**
+- App source code path: "/"
+- Built app content directory: "/dist"
+- Secure token management for Azure Static Web Apps
+- Automated deployment to Azure Static Web Apps
+
+✅ **Security & Authentication**
+- OIDC client integration
+- Secure token handling
+- GitHub Actions permissions management
+- Protected deployment credentials
 
 ### API unit tests
 There are some unit test written, you can run the tests with `yarn jest`
