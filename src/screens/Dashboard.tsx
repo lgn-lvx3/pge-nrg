@@ -12,7 +12,7 @@ import {
 import { Utils } from "@/Utils";
 import { useAuth } from "@/AuthContext";
 import { useNavigate } from "react-router";
-import { BlobServiceClient } from "@azure/storage-blob";
+import { BlobServiceClient, type Metadata } from "@azure/storage-blob";
 
 type InputEntry = {
 	date: string;
@@ -106,20 +106,6 @@ export function Dashboard() {
 				`${userInfo?.userId}-${file.name}`,
 			);
 
-			// Add metadata to the blob upload
-			const metadata = {
-				"user-id": userInfo?.userId || "unknown",
-				"user-email": userInfo?.userDetails || "unknown",
-				"identity-provider": userInfo?.identityProvider || "unknown",
-				"upload-date": new Date().toISOString(),
-				"original-filename": file.name,
-				"file-size": file.size.toString(),
-				"content-type": file.type,
-			};
-
-			// First set the metadata
-			await blockBlobClient.setMetadata(metadata);
-
 			// Then upload the data
 			const upload = await blockBlobClient.uploadData(file, {
 				onProgress: (ev) => {
@@ -130,6 +116,22 @@ export function Dashboard() {
 			});
 
 			console.log("Upload complete", upload);
+
+			// Add metadata to the blob upload
+			const metadata = {
+				userId: userInfo?.userId || "unknown",
+				// "user-email": userInfo?.userDetails || "unknown",
+				// "identity-provider": userInfo?.identityProvider || "unknown",
+				uploadDate: new Date().toISOString(),
+				originalFilename: file.name,
+				fileSize: file.size.toString(),
+				contentType: file.type,
+			} as Metadata;
+
+			console.log("metadata", metadata);
+
+			// First set the metadata
+			await blockBlobClient.setMetadata(metadata);
 			console.log("Metadata applied:", metadata);
 			setSuccess("File uploaded successfully");
 
