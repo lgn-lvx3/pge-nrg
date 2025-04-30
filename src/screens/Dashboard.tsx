@@ -108,25 +108,29 @@ export function Dashboard() {
 
 			// Add metadata to the blob upload
 			const metadata = {
-				userId: userInfo?.userId || "unknown",
-				userEmail: userInfo?.userDetails || "unknown",
-				identityProvider: userInfo?.identityProvider || "unknown",
-				uploadDate: new Date().toISOString(),
-				originalFilename: file.name,
-				fileSize: file.size.toString(),
-				contentType: file.type,
+				"user-id": userInfo?.userId || "unknown",
+				"user-email": userInfo?.userDetails || "unknown",
+				"identity-provider": userInfo?.identityProvider || "unknown",
+				"upload-date": new Date().toISOString(),
+				"original-filename": file.name,
+				"file-size": file.size.toString(),
+				"content-type": file.type,
 			};
 
+			// First set the metadata
+			await blockBlobClient.setMetadata(metadata);
+
+			// Then upload the data
 			const upload = await blockBlobClient.uploadData(file, {
 				onProgress: (ev) => {
 					const percent = Math.round((ev.loadedBytes / file.size) * 100);
 					console.log(`Upload progress: ${percent}%`);
 					setUploadProgress(percent);
 				},
-				metadata: metadata,
 			});
 
 			console.log("Upload complete", upload);
+			console.log("Metadata applied:", metadata);
 			setSuccess("File uploaded successfully");
 
 			// After successful upload, process the file
