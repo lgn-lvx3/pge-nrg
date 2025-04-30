@@ -13,6 +13,30 @@ import { Utils } from "@/Utils";
 import { useAuth } from "@/AuthContext";
 import { useNavigate } from "react-router";
 import { BlobServiceClient, type Metadata } from "@azure/storage-blob";
+import {
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend,
+} from "chart.js";
+import { Line, Bar } from "react-chartjs-2";
+
+// Register ChartJS components
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend,
+);
 
 type InputEntry = {
 	date: string;
@@ -289,6 +313,98 @@ export function Dashboard() {
 	const averageMonthlyUsageByMonth =
 		Utils.calculateAverageMonthlyUsageByMonth(energyEntries);
 
+	const chartData = {
+		labels: energyEntries.map((entry) =>
+			new Date(entry.entryDate).toLocaleDateString(),
+		),
+		datasets: [
+			{
+				label: "Energy Usage (kWh)",
+				data: energyEntries.map((entry) => entry.usage),
+				borderColor: "rgb(75, 192, 192)",
+				tension: 0.1,
+			},
+		],
+	};
+
+	const monthlyChartData = {
+		labels: averageMonthlyUsageByMonth.map((entry) => entry.month),
+		datasets: [
+			{
+				label: "Average Monthly Usage (kWh)",
+				data: averageMonthlyUsageByMonth.map((entry) => entry.averageUsage),
+				backgroundColor: "rgba(75, 192, 192, 0.5)",
+			},
+		],
+	};
+
+	const chartOptions = {
+		responsive: true,
+		maintainAspectRatio: false,
+		plugins: {
+			legend: {
+				position: "top" as const,
+			},
+			title: {
+				display: true,
+				text: "Energy Usage Over Time",
+			},
+		},
+		scales: {
+			x: {
+				ticks: {
+					maxRotation: 45,
+					minRotation: 45,
+					autoSkip: true,
+					maxTicksLimit: 10,
+				},
+				grid: {
+					display: false,
+				},
+			},
+			y: {
+				beginAtZero: true,
+				grid: {
+					color: "rgba(0, 0, 0, 0.1)",
+				},
+				suggestedMin: 0,
+				suggestedMax: 50,
+			},
+		},
+		elements: {
+			point: {
+				radius: 2,
+				hoverRadius: 4,
+			},
+			line: {
+				tension: 0.3,
+			},
+		},
+	};
+
+	const monthlyChartOptions = {
+		responsive: true,
+		maintainAspectRatio: false,
+		aspectRatio: 1.5,
+		plugins: {
+			legend: {
+				position: "top" as const,
+			},
+			title: {
+				display: true,
+				text: "Average Monthly Energy Usage",
+			},
+		},
+		scales: {
+			y: {
+				beginAtZero: true,
+				grid: {
+					color: "rgba(0, 0, 0, 0.1)",
+				},
+			},
+		},
+	};
+
 	return (
 		<div className="container mx-auto">
 			{/* Modal for adding a new entry */}
@@ -449,15 +565,21 @@ export function Dashboard() {
 
 			{/* Main content */}
 			<div className="flex-1 flex-row justify-between items-center">
-				<div className="grid grid-cols-8 gap-3">
-					<div className="col-span-6">
+				<div className="grid grid-cols-1 md:grid-cols-8 gap-3">
+					<div className="col-span-1 md:col-span-6">
 						<Card className="p-3 shadow-xl">
 							<Card.Body>
 								<Card.Title>
-									<h1 className="text-4xl font-bold mb-3">
-										Energy Usage Entries
-									</h1>
+									<h1 className="text-4xl font-bold mb-3">Your Energy Usage</h1>
 								</Card.Title>
+								<div className="grid grid-cols-1 gap-4 mb-4">
+									<div
+										className="bg-white border border-gray-200 rounded-lg p-4"
+										style={{ height: "300px" }}
+									>
+										<Line options={chartOptions} data={chartData} />
+									</div>
+								</div>
 								<Card.Actions>
 									<Button onClick={handleEntryShow}>Add Entry</Button>
 									<Button className="btn-link" onClick={handleUploadShow}>
@@ -465,48 +587,53 @@ export function Dashboard() {
 									</Button>
 									{isLoading && <Button loading={true} />}
 								</Card.Actions>
-								<div className="h-[700px] overflow-y-auto">
-									{energyEntries.length === 0 && (
-										<div className="text-center">
-											No entries found. Create one!
-										</div>
-									)}
-									{energyEntries.length > 0 && (
-										<Table pinRows zebra>
-											<Table.Head>
-												<span>Date</span>
-												<span>Usage</span>
-												<span>Created</span>
-												<span>Input Type</span>
-											</Table.Head>
+								<Card className="bg-white border border-gray-200 mt-4">
+									<Card.Body>
+										<div className="h-[700px] overflow-y-auto">
+											{energyEntries.length === 0 && (
+												<div className="text-center">
+													No entries found. Create one!
+												</div>
+											)}
+											{energyEntries.length > 0 && (
+												<Table pinRows zebra>
+													<Table.Head>
+														<span>Date</span>
+														<span>Usage</span>
+														<span>Created</span>
+														<span>Input Type</span>
+													</Table.Head>
 
-											<Table.Body>
-												{energyEntries.length > 0 &&
-													energyEntries.map((entry) => (
-														<Table.Row key={entry.id}>
-															<span>
-																{new Date(entry.entryDate).toLocaleDateString()}
-															</span>
-															<span>{entry.usage} kWh</span>
-															<span>
-																{new Date(entry.createdAt).toLocaleDateString()}
-															</span>
-															<span>{entry.createdType}</span>
-														</Table.Row>
-													))}
-											</Table.Body>
-										</Table>
-									)}
-								</div>
+													<Table.Body>
+														{energyEntries.length > 0 &&
+															energyEntries.map((entry) => (
+																<Table.Row key={entry.id}>
+																	<span>
+																		{new Date(
+																			entry.entryDate,
+																		).toLocaleDateString()}
+																	</span>
+																	<span>{entry.usage} kWh</span>
+																	<span>
+																		{new Date(
+																			entry.createdAt,
+																		).toLocaleDateString()}
+																	</span>
+																	<span>{entry.createdType}</span>
+																</Table.Row>
+															))}
+													</Table.Body>
+												</Table>
+											)}
+										</div>
+									</Card.Body>
+								</Card>
 							</Card.Body>
 						</Card>
 					</div>
-					<div className="grid col-span-2">
+					<div className="col-span-1 md:col-span-2 mx-auto w-full max-w-2xl md:max-w-none">
 						<Card className="shadow-xl">
 							<Card.Body>
-								{/* <Card.Title>
-									<span className="text-2xl font-bold">Energy Data</span>
-								</Card.Title> */}
 								<h3 className="text-xl font-bold">
 									Total:{" "}
 									{Number(
@@ -542,6 +669,12 @@ export function Dashboard() {
 											})}
 										</Table.Body>
 									</Table>
+								</div>
+								<div
+									className="mt-4 bg-white p-4 rounded-lg shadow"
+									style={{ height: "300px" }}
+								>
+									<Bar options={monthlyChartOptions} data={monthlyChartData} />
 								</div>
 							</Card.Body>
 						</Card>
