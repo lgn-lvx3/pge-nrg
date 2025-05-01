@@ -88,7 +88,7 @@ export function Alerts() {
 	return (
 		<div className="container w-full">
 			{/* Modal for adding a new entry */}
-			<Modal ref={entryRef} ariaHidden={false} backdrop={true}>
+			<Modal ref={entryRef} ariaHidden={false} backdrop>
 				<Modal.Header className="font-bold">Add Energy Entry</Modal.Header>
 				<Modal.Body>
 					<div className="flex flex-row gap-2">

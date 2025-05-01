@@ -43,7 +43,7 @@ export function FileUploadModal({
 	};
 
 	return (
-		<Modal open={isOpen} onClose={onClose}>
+		<Modal open={isOpen} onClose={onClose} backdrop>
 			<Modal.Header className="font-bold">Upload Energy Data</Modal.Header>
 			<Modal.Body>
 				<div className="form-control w-full max-w-xs">
