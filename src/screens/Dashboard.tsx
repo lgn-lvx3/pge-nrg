@@ -298,7 +298,7 @@ export function Dashboard() {
 										onClick={() => setIsAnalyzeModalOpen(true)}
 										className="ml-auto"
 									>
-										✨ Analyze Usage ✨
+										✨ AI Usage Analysis ✨
 									</Button>
 									{isLoading && (
 										<Button loading={true} color="ghost">
