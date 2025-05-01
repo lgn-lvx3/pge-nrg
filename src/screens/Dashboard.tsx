@@ -283,7 +283,7 @@ export function Dashboard() {
 
 								<EnergyCharts filteredEntries={filteredEntries} />
 
-								<Card.Actions>
+								<Card.Actions className="flex flex-row justify-between items-center">
 									<Button onClick={() => setIsEntryModalOpen(true)}>
 										Add Entry
 									</Button>
@@ -293,6 +293,11 @@ export function Dashboard() {
 									>
 										Upload CSV
 									</Button>
+									{isLoading && (
+										<Button loading={true} color="ghost">
+											Loading Entries
+										</Button>
+									)}
 									<Button
 										color="neutral"
 										onClick={() => setIsAnalyzeModalOpen(true)}
@@ -300,11 +305,6 @@ export function Dashboard() {
 									>
 										✨ AI Usage Analysis ✨
 									</Button>
-									{isLoading && (
-										<Button loading={true} color="ghost">
-											Loading Entries
-										</Button>
-									)}
 								</Card.Actions>
 
 								<Card className="bg-white border border-gray-200 mt-4">
