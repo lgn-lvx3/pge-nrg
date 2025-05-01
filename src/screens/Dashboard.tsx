@@ -35,6 +35,7 @@ import { EntryModal } from "@/components/dashboard/EntryModal";
 import { FileUploadModal } from "@/components/dashboard/FileUploadModal";
 import { EnergyTable } from "@/components/dashboard/EnergyTable";
 import { EnergySummary } from "@/components/dashboard/EnergySummary";
+import { AnalyzeUsageModal } from "@/components/dashboard/AnalyzeUsageModal";
 
 type InputEntry = {
 	date: string;
@@ -60,6 +61,7 @@ export function Dashboard() {
 	const [isUploading, setIsUploading] = useState<boolean>(false);
 	const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+	const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
 	const [userInfo, setUserInfo] = useState<UserPrincipal | null>(null);
 
 	const { isAuthenticated } = useAuth();
@@ -247,6 +249,11 @@ export function Dashboard() {
 				success={success}
 			/>
 
+			<AnalyzeUsageModal
+				isOpen={isAnalyzeModalOpen}
+				onClose={() => setIsAnalyzeModalOpen(false)}
+			/>
+
 			<div className="flex-1 flex-row justify-between items-center">
 				<div className="grid grid-cols-1 md:grid-cols-8 gap-3">
 					<div className="col-span-1 md:col-span-6">
@@ -285,6 +292,13 @@ export function Dashboard() {
 										onClick={() => setIsUploadModalOpen(true)}
 									>
 										Upload CSV
+									</Button>
+									<Button
+										color="neutral"
+										onClick={() => setIsAnalyzeModalOpen(true)}
+										className="ml-auto"
+									>
+										✨ Analyze Usage ✨
 									</Button>
 									{isLoading && (
 										<Button loading={true} color="ghost">
