@@ -39,6 +39,13 @@ You can download an example CSV file to test the upload functionality:
 - Returns detailed energy usage data
 - Can be used for visualization
 
+✅ **AI-Powered Analysis**
+- Implemented via `/recommendations` endpoint
+- Provides AI-generated insights on energy usage patterns
+- Offers personalized recommendations for energy savings
+- Includes estimated savings potential
+- Features a disclaimer about AI-generated content
+
 ✅ **Alerts and Notifications**
 - Implemented via `/energy-alerts` endpoint
 - Supports multiple notification channels (email, SMS)
@@ -64,6 +71,7 @@ You can download an example CSV file to test the upload functionality:
 - Progress indicators for file uploads
 - Error handling and success messages
 - Responsive tables for data display
+- AI analysis modal with recommendations
 
 ✅ **Alert Management**
 - Alert history tracking
@@ -93,6 +101,12 @@ You can download an example CSV file to test the upload functionality:
 - GET `/energy-history`
 - Supports date range filtering
 - Returns detailed usage data
+
+✅ **AI Analysis**
+- GET `/recommendations`
+- Provides AI-generated insights
+- Returns personalized recommendations
+- Includes estimated savings
 
 ✅ **Alerts**
 - POST `/energy-alerts`
