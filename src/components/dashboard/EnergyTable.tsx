@@ -36,6 +36,7 @@ export function EnergyTable({
 				{filteredEntries.length > 0 && (
 					<Table pinRows zebra>
 						<Table.Head>
+							<span>#</span>
 							<span>Date</span>
 							<span>Usage</span>
 							<span>Created</span>
@@ -43,8 +44,9 @@ export function EnergyTable({
 						</Table.Head>
 
 						<Table.Body>
-							{filteredEntries.map((entry) => (
+							{filteredEntries.map((entry, index) => (
 								<Table.Row key={entry.id}>
+									<span>{index + 1}</span>
 									<span>{new Date(entry.entryDate).toLocaleDateString()}</span>
 									<span>{entry.usage} kWh</span>
 									<span>{new Date(entry.createdAt).toLocaleDateString()}</span>

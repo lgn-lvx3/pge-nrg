@@ -236,7 +236,10 @@ export function Dashboard() {
 
 			<FileUploadModal
 				isOpen={isUploadModalOpen}
-				onClose={() => setIsUploadModalOpen(false)}
+				onClose={() => {
+					setIsUploadModalOpen(false);
+					fetchEnergyData();
+				}}
 				onUpload={handleFileUpload}
 				uploadProgress={uploadProgress}
 				isUploading={isUploading}
